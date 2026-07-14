@@ -7,7 +7,6 @@ import java.time.LocalDate;
 
 public class ClientDto {
 
-    private Long id;
     private String firstName;
     private String lastName;
     private int age;
@@ -19,9 +18,8 @@ public class ClientDto {
     public ClientDto() {
     }
 
-    public ClientDto(Long id, String firstName, String lastName, int age, String phoneNumber,
+    public ClientDto(String firstName, String lastName, int age, String phoneNumber,
                      LocalDate lastVisitDate, ClientStatus status, BigDecimal spentAmount) {
-        this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.age = age;
@@ -29,14 +27,6 @@ public class ClientDto {
         this.lastVisitDate = lastVisitDate;
         this.status = status;
         this.spentAmount = spentAmount;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getFirstName() {
@@ -98,8 +88,7 @@ public class ClientDto {
     @Override
     public String toString() {
         return "ClientDto{" +
-                "id=" + id +
-                ", firstName='" + firstName + '\'' +
+                "firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
                 ", age=" + age +
                 ", phoneNumber='" + phoneNumber + '\'' +

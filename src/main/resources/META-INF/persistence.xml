@@ -7,6 +7,8 @@
     <persistence-unit name="sport-center" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
         <class>entity.Client</class>
+        <class>entity.ProvidedService</class>
+        <class>entity.Facility</class>
 
         <properties>
             <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>
@@ -18,6 +20,7 @@
             <property name="hibernate.hbm2ddl.auto" value="update"/>
             <property name="hibernate.show_sql" value="true"/>
             <property name="hibernate.format_sql" value="true"/>
+            <property name="hibernate.current_session_context_class" value="thread"/>
         </properties>
     </persistence-unit>
 

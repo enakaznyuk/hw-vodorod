@@ -7,6 +7,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import repository.ClientRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public class ClientService {
 
@@ -53,6 +54,10 @@ public class ClientService {
                 .toList();
     }
 
+    public Optional<ClientDto> findClientById(Long id) {
+        return clientRepository.findByIdViaSession(id).map(this::toDto);
+    }
+
     public void deleteClient(Long id) {
         if (clientRepository.findById(id).isEmpty()) {
             System.out.println("Клиент с id=" + id + " не найден, удаление пропущено");
@@ -71,7 +76,6 @@ public class ClientService {
 
     private Client toEntity(ClientDto clientDto) {
         Client client = new Client();
-        client.setId(clientDto.getId());
         client.setFirstName(clientDto.getFirstName());
         client.setLastName(clientDto.getLastName());
         client.setAge(clientDto.getAge());
@@ -84,7 +88,6 @@ public class ClientService {
 
     private ClientDto toDto(Client client) {
         return new ClientDto(
-                client.getId(),
                 client.getFirstName(),
                 client.getLastName(),
                 client.getAge(),

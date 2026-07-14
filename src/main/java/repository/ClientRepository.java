@@ -6,6 +6,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.NoResultException;
+import org.hibernate.Session;
+import util.HibernateUtil;
 
 import java.util.List;
 import java.util.Optional;
@@ -81,6 +83,15 @@ public class ClientRepository {
             return Optional.ofNullable(entityManager.find(Client.class, id));
         } finally {
             entityManager.close();
+        }
+    }
+
+    public Optional<Client> findByIdViaSession(Long id) {
+        Session session = HibernateUtil.openSession();
+        try {
+            return Optional.ofNullable(session.get(Client.class, id));
+        } finally {
+            session.close();
         }
     }
 
