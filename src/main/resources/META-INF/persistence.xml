@@ -9,6 +9,8 @@
         <class>entity.Client</class>
         <class>entity.ProvidedService</class>
         <class>entity.Facility</class>
+        <class>entity.SmallCapacityFacility</class>
+        <class>entity.PremiumClient</class>
 
         <properties>
             <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>

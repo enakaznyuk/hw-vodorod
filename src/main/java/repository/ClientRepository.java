@@ -1,5 +1,6 @@
 package repository;
 
+import entity.Address;
 import entity.Client;
 import entity.ClientStatus;
 import jakarta.persistence.EntityManager;
@@ -127,6 +128,32 @@ public class ClientRepository {
                 client.setStatus(status);
             }
             transaction.commit();
+        } catch (Exception exception) {
+            if (transaction.isActive()) {
+                transaction.rollback();
+            }
+            throw exception;
+        } finally {
+            entityManager.close();
+        }
+    }
+
+    public void updateAddressByPhoneNumber(String phoneNumber, Address address) {
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+
+        transaction.begin();
+        try {
+            Client client = entityManager.createQuery(
+                            "SELECT c FROM Client c WHERE c.phoneNumber = :phoneNumber", Client.class)
+                    .setParameter("phoneNumber", phoneNumber)
+                    .getSingleResult();
+            client.setAddress(address);
+            transaction.commit();
+        } catch (NoResultException exception) {
+            if (transaction.isActive()) {
+                transaction.rollback();
+            }
         } catch (Exception exception) {
             if (transaction.isActive()) {
                 transaction.rollback();

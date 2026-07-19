@@ -1,6 +1,8 @@
 package service;
 
+import dto.AddressDto;
 import dto.ClientDto;
+import entity.Address;
 import entity.Client;
 import entity.ClientStatus;
 import org.hibernate.exception.ConstraintViolationException;
@@ -19,6 +21,12 @@ public class ClientService {
 
     public boolean addClient(ClientDto clientDto) {
         if (clientRepository.existsByPhoneNumber(clientDto.getPhoneNumber())) {
+            if (clientDto.getAddress() != null) {
+                clientRepository.updateAddressByPhoneNumber(
+                        clientDto.getPhoneNumber(),
+                        toAddressEntity(clientDto.getAddress())
+                );
+            }
             System.out.println("Клиент с телефоном " + clientDto.getPhoneNumber() + " уже существует, пропускаем");
             return false;
         }
@@ -83,6 +91,7 @@ public class ClientService {
         client.setLastVisitDate(clientDto.getLastVisitDate());
         client.setStatus(clientDto.getStatus());
         client.setSpentAmount(clientDto.getSpentAmount());
+        client.setAddress(toAddressEntity(clientDto.getAddress()));
         return client;
     }
 
@@ -94,7 +103,32 @@ public class ClientService {
                 client.getPhoneNumber(),
                 client.getLastVisitDate(),
                 client.getStatus(),
-                client.getSpentAmount()
+                client.getSpentAmount(),
+                toAddressDto(client.getAddress())
+        );
+    }
+
+    private Address toAddressEntity(AddressDto addressDto) {
+        if (addressDto == null) {
+            return null;
+        }
+        return new Address(
+                addressDto.getCity(),
+                addressDto.getStreet(),
+                addressDto.getHouseNumber(),
+                addressDto.getPostalCode()
+        );
+    }
+
+    private AddressDto toAddressDto(Address address) {
+        if (address == null) {
+            return null;
+        }
+        return new AddressDto(
+                address.getCity(),
+                address.getStreet(),
+                address.getHouseNumber(),
+                address.getPostalCode()
         );
     }
 }

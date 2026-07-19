@@ -2,7 +2,9 @@ package util;
 
 import entity.Client;
 import entity.Facility;
+import entity.PremiumClient;
 import entity.ProvidedService;
+import entity.SmallCapacityFacility;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
@@ -29,6 +31,8 @@ public class HibernateUtil {
                     .addAnnotatedClass(Client.class)
                     .addAnnotatedClass(ProvidedService.class)
                     .addAnnotatedClass(Facility.class)
+                    .addAnnotatedClass(SmallCapacityFacility.class)
+                    .addAnnotatedClass(PremiumClient.class)
                     .buildSessionFactory();
         } catch (Exception exception) {
             throw new ExceptionInInitializerError(exception);

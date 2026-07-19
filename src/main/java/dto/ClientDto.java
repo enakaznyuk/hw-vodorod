@@ -14,12 +14,13 @@ public class ClientDto {
     private LocalDate lastVisitDate;
     private ClientStatus status;
     private BigDecimal spentAmount;
+    private AddressDto address;
 
     public ClientDto() {
     }
 
     public ClientDto(String firstName, String lastName, int age, String phoneNumber,
-                     LocalDate lastVisitDate, ClientStatus status, BigDecimal spentAmount) {
+                     LocalDate lastVisitDate, ClientStatus status, BigDecimal spentAmount, AddressDto address) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.age = age;
@@ -27,6 +28,7 @@ public class ClientDto {
         this.lastVisitDate = lastVisitDate;
         this.status = status;
         this.spentAmount = spentAmount;
+        this.address = address;
     }
 
     public String getFirstName() {
@@ -85,6 +87,14 @@ public class ClientDto {
         this.spentAmount = spentAmount;
     }
 
+    public AddressDto getAddress() {
+        return address;
+    }
+
+    public void setAddress(AddressDto address) {
+        this.address = address;
+    }
+
     @Override
     public String toString() {
         return "ClientDto{" +
@@ -95,6 +105,7 @@ public class ClientDto {
                 ", lastVisitDate=" + lastVisitDate +
                 ", status=" + status +
                 ", spentAmount=" + spentAmount +
+                ", address=" + address +
                 '}';
     }
 }

@@ -1,12 +1,17 @@
+import dto.AddressDto;
 import dto.ClientDto;
 import dto.FacilityDto;
 import dto.ProvidedServiceDto;
 import entity.ClientStatus;
 import entity.FacilityStatus;
+import entity.PremiumClient;
+import entity.SmallCapacityFacility;
 import jakarta.persistence.EntityManagerFactory;
 import repository.ClientRepository;
 import repository.FacilityRepository;
+import repository.PremiumClientRepository;
 import repository.ProvidedServiceRepository;
+import repository.SmallCapacityFacilityRepository;
 import service.ClientService;
 import service.FacilityService;
 import service.ProvidedServiceService;
@@ -30,6 +35,9 @@ public class Main {
 
         FacilityRepository facilityRepository = new FacilityRepository();
         FacilityService facilityService = new FacilityService(facilityRepository);
+
+        SmallCapacityFacilityRepository smallCapacityFacilityRepository = new SmallCapacityFacilityRepository();
+        PremiumClientRepository premiumClientRepository = new PremiumClientRepository();
 
         System.out.println("=== Клиенты (EntityManager) ===");
         int addedClients = addInitialClients(clientService);
@@ -71,6 +79,29 @@ public class Main {
         clientService.deleteClient(5L);
         printClients(clientService.getAllClients());
 
+        System.out.println("\n=== Помещения вместимостью не более 15 человек (@Subselect) ===");
+        List<SmallCapacityFacility> smallFacilities = smallCapacityFacilityRepository.findAll();
+        if (smallFacilities.isEmpty()) {
+            System.out.println("Таких помещений нет");
+        } else {
+            for (SmallCapacityFacility facility : smallFacilities) {
+                System.out.println(facility.getFacilityName()
+                        + " (" + facility.getIdentificationNumber() + ")"
+                        + ", вместимость=" + facility.getMaxCapacity()
+                        + ", стоимость=" + facility.getHourlyRentalCost());
+            }
+        }
+
+        System.out.println("\n=== Премиум-клиенты (@SQLRestriction / аналог @Where) ===");
+        List<PremiumClient> premiumClients = premiumClientRepository.findAll();
+        if (premiumClients.isEmpty()) {
+            System.out.println("Премиум-клиентов нет");
+        } else {
+            for (PremiumClient client : premiumClients) {
+                System.out.println(client);
+            }
+        }
+
         JpaUtil.shutdown();
         HibernateUtil.shutdown();
     }
@@ -80,31 +111,36 @@ public class Main {
 
         if (clientService.addClient(createClient(
                 "Иван", "Петров", 28, "+7-900-111-22-33",
-                LocalDate.of(2026, 6, 15), ClientStatus.ACTIVE, "12500.00"))) {
+                LocalDate.of(2026, 6, 15), ClientStatus.ACTIVE, "12500.00",
+                new AddressDto("Москва", "Тверская", "12", "125009")))) {
             addedClients++;
         }
 
         if (clientService.addClient(createClient(
                 "Анна", "Смирнова", 24, "+7-900-222-33-44",
-                LocalDate.of(2026, 6, 28), ClientStatus.PREMIUM, "45800.50"))) {
+                LocalDate.of(2026, 6, 28), ClientStatus.PREMIUM, "45800.50",
+                new AddressDto("Санкт-Петербург", "Невский проспект", "28", "191186")))) {
             addedClients++;
         }
 
         if (clientService.addClient(createClient(
                 "Дмитрий", "Козлов", 35, "+7-900-333-44-55",
-                LocalDate.of(2026, 5, 10), ClientStatus.ACTIVE, "8700.00"))) {
+                LocalDate.of(2026, 5, 10), ClientStatus.ACTIVE, "8700.00",
+                new AddressDto("Казань", "Баумана", "5", "420111")))) {
             addedClients++;
         }
 
         if (clientService.addClient(createClient(
                 "Елена", "Волкова", 31, "+7-900-444-55-66",
-                LocalDate.of(2026, 3, 2), ClientStatus.BLOCKED, "3200.75"))) {
+                LocalDate.of(2026, 3, 2), ClientStatus.BLOCKED, "3200.75",
+                new AddressDto("Новосибирск", "Красный проспект", "50", "630091")))) {
             addedClients++;
         }
 
         if (clientService.addClient(createClient(
                 "Сергей", "Новиков", 42, "+7-900-555-66-77",
-                LocalDate.of(2026, 7, 1), ClientStatus.ACTIVE, "15600.00"))) {
+                LocalDate.of(2026, 7, 1), ClientStatus.ACTIVE, "15600.00",
+                new AddressDto("Екатеринбург", "Ленина", "24", "620014")))) {
             addedClients++;
         }
 
@@ -131,20 +167,44 @@ public class Main {
     }
 
     private static Long addInitialFacilities(FacilityService facilityService) {
-        FacilityDto gym = new FacilityDto(
+        facilityService.addFacility(new FacilityDto(
                 "Тренажёрный зал",
                 "GYM-001",
                 30,
                 FacilityStatus.ACTIVE,
                 new BigDecimal("1500.00")
-        );
+        ));
 
-        facilityService.addFacility(gym);
+        facilityService.addFacility(new FacilityDto(
+                "Йога-студия",
+                "YOGA-001",
+                12,
+                FacilityStatus.ACTIVE,
+                new BigDecimal("900.00")
+        ));
+
+        facilityService.addFacility(new FacilityDto(
+                "Массажный кабинет",
+                "MASSAGE-001",
+                4,
+                FacilityStatus.ACTIVE,
+                new BigDecimal("2500.00")
+        ));
+
+        facilityService.addFacility(new FacilityDto(
+                "Зал пилатеса",
+                "PILATES-001",
+                15,
+                FacilityStatus.ACTIVE,
+                new BigDecimal("1100.00")
+        ));
+
         return facilityService.findIdByIdentificationNumber("GYM-001").orElse(null);
     }
 
     private static ClientDto createClient(String firstName, String lastName, int age, String phoneNumber,
-                                          LocalDate lastVisitDate, ClientStatus status, String spentAmount) {
+                                          LocalDate lastVisitDate, ClientStatus status, String spentAmount,
+                                          AddressDto address) {
         return new ClientDto(
                 firstName,
                 lastName,
@@ -152,7 +212,8 @@ public class Main {
                 phoneNumber,
                 lastVisitDate,
                 status,
-                new BigDecimal(spentAmount)
+                new BigDecimal(spentAmount),
+                address
         );
     }
 

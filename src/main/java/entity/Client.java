@@ -35,11 +35,14 @@ public class Client {
     @Column(name = "spent_amount", nullable = false)
     private BigDecimal spentAmount;
 
+    @Embedded
+    private Address address;
+
     public Client() {
     }
 
     public Client(String firstName, String lastName, int age, String phoneNumber,
-                  LocalDate lastVisitDate, ClientStatus status, BigDecimal spentAmount) {
+                  LocalDate lastVisitDate, ClientStatus status, BigDecimal spentAmount, Address address) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.age = age;
@@ -47,6 +50,7 @@ public class Client {
         this.lastVisitDate = lastVisitDate;
         this.status = status;
         this.spentAmount = spentAmount;
+        this.address = address;
     }
 
     public Long getId() {
@@ -113,6 +117,14 @@ public class Client {
         this.spentAmount = spentAmount;
     }
 
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(Address address) {
+        this.address = address;
+    }
+
     @Override
     public String toString() {
         return "Client{" +
@@ -124,6 +136,7 @@ public class Client {
                 ", lastVisitDate=" + lastVisitDate +
                 ", status=" + status +
                 ", spentAmount=" + spentAmount +
+                ", address=" + address +
                 '}';
     }
 }
