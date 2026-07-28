@@ -6,7 +6,9 @@
 
     <persistence-unit name="sport-center" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
-        <class>entity.Client</class>
+        <class>entity.User</class>
+        <class>entity.Visitor</class>
+        <class>entity.Employee</class>
         <class>entity.ProvidedService</class>
         <class>entity.Facility</class>
         <class>entity.SmallCapacityFacility</class>

@@ -1,10 +1,12 @@
 package util;
 
-import entity.Client;
+import entity.Employee;
 import entity.Facility;
 import entity.PremiumClient;
 import entity.ProvidedService;
 import entity.SmallCapacityFacility;
+import entity.User;
+import entity.Visitor;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
@@ -28,7 +30,9 @@ public class HibernateUtil {
                     .setProperty("hibernate.show_sql", "true")
                     .setProperty("hibernate.format_sql", "true")
                     .setProperty("hibernate.current_session_context_class", "thread")
-                    .addAnnotatedClass(Client.class)
+                    .addAnnotatedClass(User.class)
+                    .addAnnotatedClass(Visitor.class)
+                    .addAnnotatedClass(Employee.class)
                     .addAnnotatedClass(ProvidedService.class)
                     .addAnnotatedClass(Facility.class)
                     .addAnnotatedClass(SmallCapacityFacility.class)

@@ -1,34 +1,37 @@
 import dto.AddressDto;
-import dto.ClientDto;
+import dto.EmployeeDto;
 import dto.FacilityDto;
 import dto.ProvidedServiceDto;
+import dto.VisitorDto;
 import entity.ClientStatus;
 import entity.FacilityStatus;
 import entity.PremiumClient;
 import entity.SmallCapacityFacility;
-import jakarta.persistence.EntityManagerFactory;
-import repository.ClientRepository;
+import repository.EmployeeRepository;
 import repository.FacilityRepository;
 import repository.PremiumClientRepository;
 import repository.ProvidedServiceRepository;
 import repository.SmallCapacityFacilityRepository;
-import service.ClientService;
+import repository.VisitorRepository;
+import service.EmployeeService;
 import service.FacilityService;
 import service.ProvidedServiceService;
+import service.VisitorService;
 import util.HibernateUtil;
-import util.JpaUtil;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class Main {
 
     public static void main(String[] args) {
-        EntityManagerFactory entityManagerFactory = JpaUtil.getEntityManagerFactory();
+        VisitorRepository visitorRepository = new VisitorRepository();
+        VisitorService visitorService = new VisitorService(visitorRepository);
 
-        ClientRepository clientRepository = new ClientRepository(entityManagerFactory);
-        ClientService clientService = new ClientService(clientRepository);
+        EmployeeRepository employeeRepository = new EmployeeRepository();
+        EmployeeService employeeService = new EmployeeService(employeeRepository);
 
         ProvidedServiceRepository providedServiceRepository = new ProvidedServiceRepository();
         ProvidedServiceService providedServiceService = new ProvidedServiceService(providedServiceRepository);
@@ -39,16 +42,21 @@ public class Main {
         SmallCapacityFacilityRepository smallCapacityFacilityRepository = new SmallCapacityFacilityRepository();
         PremiumClientRepository premiumClientRepository = new PremiumClientRepository();
 
-        System.out.println("=== Клиенты (EntityManager) ===");
-        int addedClients = addInitialClients(clientService);
-        System.out.println("Добавлено новых клиентов: " + addedClients);
-        printClients(clientService.getAllClients());
+        System.out.println("=== Посетители (JOINED, Session) ===");
+        int addedVisitors = addInitialVisitors(visitorService);
+        System.out.println("Добавлено новых посетителей: " + addedVisitors);
+        printVisitors(visitorService.getAllVisitors());
 
-        System.out.println("\n=== Поиск клиента по id через Session ===");
-        clientService.findClientById(1L)
+        System.out.println("\n=== Работники (JOINED, Session) ===");
+        int addedEmployees = addInitialEmployees(employeeService);
+        System.out.println("Добавлено новых работников: " + addedEmployees);
+        printEmployees(employeeService.getAllEmployees());
+
+        System.out.println("\n=== Поиск посетителя по id через Session ===");
+        visitorService.findVisitorById(1L)
                 .ifPresentOrElse(
-                        client -> System.out.println("Найден клиент: " + client),
-                        () -> System.out.println("Клиент с id=1 не найден")
+                        visitor -> System.out.println("Найден посетитель: " + visitor),
+                        () -> System.out.println("Посетитель с id=1 не найден")
                 );
 
         System.out.println("\n=== Услуги (Session) ===");
@@ -74,10 +82,9 @@ public class Main {
         facilityService.findById(gymTemplateId)
                 .ifPresent(facility -> System.out.println("Обновлённая стоимость: " + facility));
 
-        System.out.println("\n=== Клиенты: смена статуса и удаление ===");
-        clientService.changeClientStatus(2L, ClientStatus.PREMIUM);
-        clientService.deleteClient(5L);
-        printClients(clientService.getAllClients());
+        System.out.println("\n=== Посетители: смена статуса ===");
+        visitorService.changeVisitorStatus(2L, ClientStatus.PREMIUM);
+        printVisitors(visitorService.getAllVisitors());
 
         System.out.println("\n=== Помещения вместимостью не более 15 человек (@Subselect) ===");
         List<SmallCapacityFacility> smallFacilities = smallCapacityFacilityRepository.findAll();
@@ -92,59 +99,117 @@ public class Main {
             }
         }
 
-        System.out.println("\n=== Премиум-клиенты (@SQLRestriction / аналог @Where) ===");
+        System.out.println("\n=== Премиум-посетители (@Subselect) ===");
         List<PremiumClient> premiumClients = premiumClientRepository.findAll();
         if (premiumClients.isEmpty()) {
-            System.out.println("Премиум-клиентов нет");
+            System.out.println("Премиум-посетителей нет");
         } else {
             for (PremiumClient client : premiumClients) {
                 System.out.println(client);
             }
         }
 
-        JpaUtil.shutdown();
         HibernateUtil.shutdown();
     }
 
-    private static int addInitialClients(ClientService clientService) {
-        int addedClients = 0;
+    private static int addInitialVisitors(VisitorService visitorService) {
+        int added = 0;
 
-        if (clientService.addClient(createClient(
-                "Иван", "Петров", 28, "+7-900-111-22-33",
-                LocalDate.of(2026, 6, 15), ClientStatus.ACTIVE, "12500.00",
-                new AddressDto("Москва", "Тверская", "12", "125009")))) {
-            addedClients++;
+        if (visitorService.addVisitor(new VisitorDto(
+                "Иван", "Петров", 1998,
+                new AddressDto("Москва", "Тверская", "12", "125009"),
+                ClientStatus.ACTIVE,
+                LocalDateTime.of(2026, 6, 15, 18, 30),
+                new BigDecimal("12500.00"),
+                LocalDate.of(2024, 1, 10)
+        ))) {
+            added++;
         }
 
-        if (clientService.addClient(createClient(
-                "Анна", "Смирнова", 24, "+7-900-222-33-44",
-                LocalDate.of(2026, 6, 28), ClientStatus.PREMIUM, "45800.50",
-                new AddressDto("Санкт-Петербург", "Невский проспект", "28", "191186")))) {
-            addedClients++;
+        if (visitorService.addVisitor(new VisitorDto(
+                "Анна", "Смирнова", 2002,
+                new AddressDto("Санкт-Петербург", "Невский проспект", "28", "191186"),
+                ClientStatus.PREMIUM,
+                LocalDateTime.of(2026, 6, 28, 12, 0),
+                new BigDecimal("45800.50"),
+                LocalDate.of(2023, 5, 20)
+        ))) {
+            added++;
         }
 
-        if (clientService.addClient(createClient(
-                "Дмитрий", "Козлов", 35, "+7-900-333-44-55",
-                LocalDate.of(2026, 5, 10), ClientStatus.ACTIVE, "8700.00",
-                new AddressDto("Казань", "Баумана", "5", "420111")))) {
-            addedClients++;
+        if (visitorService.addVisitor(new VisitorDto(
+                "Дмитрий", "Козлов", 1991,
+                new AddressDto("Казань", "Баумана", "5", "420111"),
+                ClientStatus.ACTIVE,
+                LocalDateTime.of(2026, 5, 10, 9, 45),
+                new BigDecimal("8700.00"),
+                LocalDate.of(2025, 2, 1)
+        ))) {
+            added++;
         }
 
-        if (clientService.addClient(createClient(
-                "Елена", "Волкова", 31, "+7-900-444-55-66",
-                LocalDate.of(2026, 3, 2), ClientStatus.BLOCKED, "3200.75",
-                new AddressDto("Новосибирск", "Красный проспект", "50", "630091")))) {
-            addedClients++;
+        if (visitorService.addVisitor(new VisitorDto(
+                "Елена", "Волкова", 1995,
+                new AddressDto("Новосибирск", "Красный проспект", "50", "630091"),
+                ClientStatus.BLOCKED,
+                LocalDateTime.of(2026, 3, 2, 16, 15),
+                new BigDecimal("3200.75"),
+                LocalDate.of(2024, 11, 3)
+        ))) {
+            added++;
         }
 
-        if (clientService.addClient(createClient(
-                "Сергей", "Новиков", 42, "+7-900-555-66-77",
-                LocalDate.of(2026, 7, 1), ClientStatus.ACTIVE, "15600.00",
-                new AddressDto("Екатеринбург", "Ленина", "24", "620014")))) {
-            addedClients++;
+        return added;
+    }
+
+    private static int addInitialEmployees(EmployeeService employeeService) {
+        int added = 0;
+
+        if (employeeService.addEmployee(new EmployeeDto(
+                "Олег", "Соколов", 1988,
+                new AddressDto("Москва", "Арбат", "10", "119019"),
+                LocalDate.of(2020, 3, 1),
+                null,
+                "Тренер",
+                new BigDecimal("75000.00")
+        ))) {
+            added++;
         }
 
-        return addedClients;
+        if (employeeService.addEmployee(new EmployeeDto(
+                "Мария", "Кузнецова", 1993,
+                new AddressDto("Москва", "Садовая", "7", "123001"),
+                LocalDate.of(2021, 6, 15),
+                null,
+                "Администратор",
+                new BigDecimal("55000.00")
+        ))) {
+            added++;
+        }
+
+        if (employeeService.addEmployee(new EmployeeDto(
+                "Павел", "Морозов", 1985,
+                new AddressDto("Химки", "Ленина", "3", "141400"),
+                LocalDate.of(2019, 1, 10),
+                LocalDate.of(2025, 12, 31),
+                "Менеджер зала",
+                new BigDecimal("90000.00")
+        ))) {
+            added++;
+        }
+
+        if (employeeService.addEmployee(new EmployeeDto(
+                "Ирина", "Белова", 1990,
+                new AddressDto("Мытищи", "Мира", "15", "141008"),
+                LocalDate.of(2022, 9, 1),
+                null,
+                "Инструктор по плаванию",
+                new BigDecimal("68000.00")
+        ))) {
+            added++;
+        }
+
+        return added;
     }
 
     private static int addInitialServices(ProvidedServiceService providedServiceService) {
@@ -202,24 +267,15 @@ public class Main {
         return facilityService.findIdByIdentificationNumber("GYM-001").orElse(null);
     }
 
-    private static ClientDto createClient(String firstName, String lastName, int age, String phoneNumber,
-                                          LocalDate lastVisitDate, ClientStatus status, String spentAmount,
-                                          AddressDto address) {
-        return new ClientDto(
-                firstName,
-                lastName,
-                age,
-                phoneNumber,
-                lastVisitDate,
-                status,
-                new BigDecimal(spentAmount),
-                address
-        );
+    private static void printVisitors(List<VisitorDto> visitors) {
+        for (VisitorDto visitor : visitors) {
+            System.out.println(visitor);
+        }
     }
 
-    private static void printClients(List<ClientDto> clients) {
-        for (ClientDto client : clients) {
-            System.out.println(client);
+    private static void printEmployees(List<EmployeeDto> employees) {
+        for (EmployeeDto employee : employees) {
+            System.out.println(employee);
         }
     }
 

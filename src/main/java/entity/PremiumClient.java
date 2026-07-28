@@ -6,20 +6,34 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
-import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.annotations.Subselect;
+import org.hibernate.annotations.Synchronize;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
-/**
- * Премиум-клиенты. В Hibernate 7 аннотация {@code @Where} заменена на {@code @SQLRestriction}.
- */
 @Entity
-@Table(name = "clients")
 @Immutable
-@SQLRestriction("status = 'PREMIUM'")
+@Subselect("""
+        SELECT u.id,
+               u.first_name,
+               u.last_name,
+               u.birth_year,
+               u.city,
+               u.street,
+               u.house_number,
+               u.postal_code,
+               v.status,
+               v.last_visit_at,
+               v.spent_amount,
+               v.first_visit_date
+        FROM users u
+        JOIN visitors v ON u.id = v.id
+        WHERE v.status = 'PREMIUM'
+        """)
+@Synchronize({"users", "visitors"})
 public class PremiumClient {
 
     @Id
@@ -31,22 +45,23 @@ public class PremiumClient {
     @Column(name = "last_name")
     private String lastName;
 
-    private int age;
+    @Column(name = "birth_year")
+    private int birthYear;
 
-    @Column(name = "phone_number")
-    private String phoneNumber;
-
-    @Column(name = "last_visit_date")
-    private LocalDate lastVisitDate;
+    @Embedded
+    private Address address;
 
     @Enumerated(EnumType.STRING)
     private ClientStatus status;
 
+    @Column(name = "last_visit_at")
+    private LocalDateTime lastVisitAt;
+
     @Column(name = "spent_amount")
     private BigDecimal spentAmount;
 
-    @Embedded
-    private Address address;
+    @Column(name = "first_visit_date")
+    private LocalDate firstVisitDate;
 
     public Long getId() {
         return id;
@@ -60,28 +75,28 @@ public class PremiumClient {
         return lastName;
     }
 
-    public int getAge() {
-        return age;
+    public int getBirthYear() {
+        return birthYear;
     }
 
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public LocalDate getLastVisitDate() {
-        return lastVisitDate;
+    public Address getAddress() {
+        return address;
     }
 
     public ClientStatus getStatus() {
         return status;
     }
 
+    public LocalDateTime getLastVisitAt() {
+        return lastVisitAt;
+    }
+
     public BigDecimal getSpentAmount() {
         return spentAmount;
     }
 
-    public Address getAddress() {
-        return address;
+    public LocalDate getFirstVisitDate() {
+        return firstVisitDate;
     }
 
     @Override
@@ -90,12 +105,12 @@ public class PremiumClient {
                 "id=" + id +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
-                ", age=" + age +
-                ", phoneNumber='" + phoneNumber + '\'' +
-                ", lastVisitDate=" + lastVisitDate +
-                ", status=" + status +
-                ", spentAmount=" + spentAmount +
+                ", birthYear=" + birthYear +
                 ", address=" + address +
+                ", status=" + status +
+                ", lastVisitAt=" + lastVisitAt +
+                ", spentAmount=" + spentAmount +
+                ", firstVisitDate=" + firstVisitDate +
                 '}';
     }
 }
