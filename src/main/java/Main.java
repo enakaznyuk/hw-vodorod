@@ -1,27 +1,36 @@
 import dto.AddressDto;
+import dto.AppointmentDto;
 import dto.EmployeeDto;
 import dto.FacilityDto;
 import dto.ProvidedServiceDto;
+import dto.VisitDto;
 import dto.VisitorDto;
+import entity.Appointment;
 import entity.ClientStatus;
 import entity.FacilityStatus;
 import entity.PremiumClient;
 import entity.SmallCapacityFacility;
+import entity.Visit;
+import repository.AppointmentRepository;
 import repository.EmployeeRepository;
 import repository.FacilityRepository;
 import repository.PremiumClientRepository;
 import repository.ProvidedServiceRepository;
 import repository.SmallCapacityFacilityRepository;
+import repository.VisitRepository;
 import repository.VisitorRepository;
+import service.AppointmentService;
 import service.EmployeeService;
 import service.FacilityService;
 import service.ProvidedServiceService;
+import service.VisitService;
 import service.VisitorService;
 import util.HibernateUtil;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 public class Main {
@@ -37,7 +46,14 @@ public class Main {
         ProvidedServiceService providedServiceService = new ProvidedServiceService(providedServiceRepository);
 
         FacilityRepository facilityRepository = new FacilityRepository();
-        FacilityService facilityService = new FacilityService(facilityRepository);
+        FacilityService facilityService = new FacilityService(facilityRepository, providedServiceRepository);
+
+        VisitRepository visitRepository = new VisitRepository();
+        VisitService visitService = new VisitService(visitRepository, visitorRepository);
+
+        AppointmentRepository appointmentRepository = new AppointmentRepository();
+        AppointmentService appointmentService = new AppointmentService(
+                appointmentRepository, visitorRepository, facilityRepository);
 
         SmallCapacityFacilityRepository smallCapacityFacilityRepository = new SmallCapacityFacilityRepository();
         PremiumClientRepository premiumClientRepository = new PremiumClientRepository();
@@ -64,7 +80,7 @@ public class Main {
         System.out.println("Добавлено новых услуг: " + addedServices);
         printServices(providedServiceService.getAllServices());
 
-        System.out.println("\n=== Помещения (Session) ===");
+        System.out.println("\n=== Помещения (Session, связь с услугами) ===");
         Long gymTemplateId = addInitialFacilities(facilityService);
         printFacilities(facilityService.getAllFacilities());
 
@@ -81,6 +97,24 @@ public class Main {
         facilityService.changeHourlyRentalCost(gymTemplateId, new BigDecimal("1800.00"));
         facilityService.findById(gymTemplateId)
                 .ifPresent(facility -> System.out.println("Обновлённая стоимость: " + facility));
+
+        System.out.println("\n=== Посещения (1 посетитель — много посещений) ===");
+        addInitialVisits(visitService, visitorRepository);
+        printVisits(visitService.getAllVisitEntities());
+
+        System.out.println("\n=== Записи (1 пользователь — много записей, 1 помещение — много записей) ===");
+        Long yogaFacilityId = addInitialAppointments(appointmentService, visitorRepository, facilityService);
+        printAppointments(appointmentService.getAllAppointmentEntities());
+
+        System.out.println("\n=== Каскадное удаление: удаляем помещение YOGA-001 ===");
+        System.out.println("Записей до удаления: " + appointmentService.countAppointments());
+        if (yogaFacilityId != null) {
+            System.out.println("Записей у YOGA-001 до удаления: "
+                    + appointmentService.findByFacilityId(yogaFacilityId).size());
+            facilityService.deleteFacility(yogaFacilityId);
+        }
+        System.out.println("Записей после удаления помещения: " + appointmentService.countAppointments());
+        printAppointments(appointmentService.getAllAppointmentEntities());
 
         System.out.println("\n=== Посетители: смена статуса ===");
         visitorService.changeVisitorStatus(2L, ClientStatus.PREMIUM);
@@ -237,7 +271,8 @@ public class Main {
                 "GYM-001",
                 30,
                 FacilityStatus.ACTIVE,
-                new BigDecimal("1500.00")
+                new BigDecimal("1500.00"),
+                "Футбол"
         ));
 
         facilityService.addFacility(new FacilityDto(
@@ -245,7 +280,8 @@ public class Main {
                 "YOGA-001",
                 12,
                 FacilityStatus.ACTIVE,
-                new BigDecimal("900.00")
+                new BigDecimal("900.00"),
+                "Плавание"
         ));
 
         facilityService.addFacility(new FacilityDto(
@@ -253,7 +289,8 @@ public class Main {
                 "MASSAGE-001",
                 4,
                 FacilityStatus.ACTIVE,
-                new BigDecimal("2500.00")
+                new BigDecimal("2500.00"),
+                "Теннис"
         ));
 
         facilityService.addFacility(new FacilityDto(
@@ -261,10 +298,68 @@ public class Main {
                 "PILATES-001",
                 15,
                 FacilityStatus.ACTIVE,
-                new BigDecimal("1100.00")
+                new BigDecimal("1100.00"),
+                "Баскетбол"
         ));
 
         return facilityService.findIdByIdentificationNumber("GYM-001").orElse(null);
+    }
+
+    private static void addInitialVisits(VisitService visitService, VisitorRepository visitorRepository) {
+        Long ivanId = visitorRepository.findByFullNameAndBirthYear("Иван", "Петров", 1998)
+                .map(visitor -> visitor.getId())
+                .orElse(null);
+        Long annaId = visitorRepository.findByFullNameAndBirthYear("Анна", "Смирнова", 2002)
+                .map(visitor -> visitor.getId())
+                .orElse(null);
+
+        if (ivanId != null) {
+            visitService.addVisit(ivanId, new VisitDto(LocalDate.of(2026, 6, 10), new BigDecimal("1500.00")));
+            visitService.addVisit(ivanId, new VisitDto(LocalDate.of(2026, 6, 15), new BigDecimal("2000.00")));
+        }
+        if (annaId != null) {
+            visitService.addVisit(annaId, new VisitDto(LocalDate.of(2026, 6, 20), new BigDecimal("3000.00")));
+            visitService.addVisit(annaId, new VisitDto(LocalDate.of(2026, 6, 28), new BigDecimal("2500.00")));
+        }
+    }
+
+    private static Long addInitialAppointments(AppointmentService appointmentService,
+                                               VisitorRepository visitorRepository,
+                                               FacilityService facilityService) {
+        Long ivanId = visitorRepository.findByFullNameAndBirthYear("Иван", "Петров", 1998)
+                .map(visitor -> visitor.getId())
+                .orElse(null);
+        Long annaId = visitorRepository.findByFullNameAndBirthYear("Анна", "Смирнова", 2002)
+                .map(visitor -> visitor.getId())
+                .orElse(null);
+        Long dmitryId = visitorRepository.findByFullNameAndBirthYear("Дмитрий", "Козлов", 1991)
+                .map(visitor -> visitor.getId())
+                .orElse(null);
+
+        Long gymId = facilityService.findIdByIdentificationNumber("GYM-001").orElse(null);
+        Long yogaId = facilityService.findIdByIdentificationNumber("YOGA-001").orElse(null);
+        Long massageId = facilityService.findIdByIdentificationNumber("MASSAGE-001").orElse(null);
+
+        if (ivanId != null && gymId != null) {
+            appointmentService.addAppointment(ivanId, gymId,
+                    new AppointmentDto(LocalDate.of(2026, 7, 10), LocalTime.of(10, 0)));
+        }
+        if (annaId != null && yogaId != null) {
+            appointmentService.addAppointment(annaId, yogaId,
+                    new AppointmentDto(LocalDate.of(2026, 7, 11), LocalTime.of(12, 30)));
+            appointmentService.addAppointment(annaId, yogaId,
+                    new AppointmentDto(LocalDate.of(2026, 7, 12), LocalTime.of(18, 0)));
+        }
+        if (dmitryId != null && massageId != null) {
+            appointmentService.addAppointment(dmitryId, massageId,
+                    new AppointmentDto(LocalDate.of(2026, 7, 15), LocalTime.of(15, 0)));
+        }
+        if (ivanId != null && yogaId != null) {
+            appointmentService.addAppointment(ivanId, yogaId,
+                    new AppointmentDto(LocalDate.of(2026, 7, 16), LocalTime.of(9, 0)));
+        }
+
+        return yogaId;
     }
 
     private static void printVisitors(List<VisitorDto> visitors) {
@@ -288,6 +383,26 @@ public class Main {
     private static void printFacilities(List<FacilityDto> facilities) {
         for (FacilityDto facility : facilities) {
             System.out.println(facility);
+        }
+    }
+
+    private static void printVisits(List<Visit> visits) {
+        if (visits.isEmpty()) {
+            System.out.println("Посещений нет");
+            return;
+        }
+        for (Visit visit : visits) {
+            System.out.println(visit);
+        }
+    }
+
+    private static void printAppointments(List<Appointment> appointments) {
+        if (appointments.isEmpty()) {
+            System.out.println("Записей нет");
+            return;
+        }
+        for (Appointment appointment : appointments) {
+            System.out.println(appointment);
         }
     }
 }

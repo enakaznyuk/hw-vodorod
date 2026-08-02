@@ -1,11 +1,13 @@
 package util;
 
+import entity.Appointment;
 import entity.Employee;
 import entity.Facility;
 import entity.PremiumClient;
 import entity.ProvidedService;
 import entity.SmallCapacityFacility;
 import entity.User;
+import entity.Visit;
 import entity.Visitor;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -35,6 +37,8 @@ public class HibernateUtil {
                     .addAnnotatedClass(Employee.class)
                     .addAnnotatedClass(ProvidedService.class)
                     .addAnnotatedClass(Facility.class)
+                    .addAnnotatedClass(Visit.class)
+                    .addAnnotatedClass(Appointment.class)
                     .addAnnotatedClass(SmallCapacityFacility.class)
                     .addAnnotatedClass(PremiumClient.class)
                     .buildSessionFactory();

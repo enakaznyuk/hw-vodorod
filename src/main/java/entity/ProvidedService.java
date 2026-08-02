@@ -3,6 +3,8 @@ package entity;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "services")
@@ -17,6 +19,9 @@ public class ProvidedService {
 
     @Column(nullable = false)
     private BigDecimal price;
+
+    @OneToMany(mappedBy = "providedService")
+    private List<Facility> facilities = new ArrayList<>();
 
     public ProvidedService() {
     }
@@ -48,6 +53,14 @@ public class ProvidedService {
 
     public void setPrice(BigDecimal price) {
         this.price = price;
+    }
+
+    public List<Facility> getFacilities() {
+        return facilities;
+    }
+
+    public void setFacilities(List<Facility> facilities) {
+        this.facilities = facilities;
     }
 
     @Override

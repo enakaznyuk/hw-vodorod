@@ -2,8 +2,10 @@ package service;
 
 import dto.FacilityDto;
 import entity.Facility;
+import entity.ProvidedService;
 import org.hibernate.exception.ConstraintViolationException;
 import repository.FacilityRepository;
+import repository.ProvidedServiceRepository;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -12,14 +14,26 @@ import java.util.Optional;
 public class FacilityService {
 
     private final FacilityRepository facilityRepository;
+    private final ProvidedServiceRepository providedServiceRepository;
 
-    public FacilityService(FacilityRepository facilityRepository) {
+    public FacilityService(FacilityRepository facilityRepository,
+                           ProvidedServiceRepository providedServiceRepository) {
         this.facilityRepository = facilityRepository;
+        this.providedServiceRepository = providedServiceRepository;
     }
 
     public boolean addFacility(FacilityDto facilityDto) {
+        Optional<ProvidedService> service = providedServiceRepository
+                .findByServiceName(facilityDto.getServiceName());
+        if (service.isEmpty()) {
+            System.out.println("Услуга '" + facilityDto.getServiceName() + "' не найдена, помещение не добавлено");
+            return false;
+        }
+
         try {
-            facilityRepository.save(toEntity(facilityDto));
+            Facility facility = toEntity(facilityDto);
+            facility.setProvidedService(service.get());
+            facilityRepository.save(facility);
             return true;
         } catch (RuntimeException exception) {
             if (isDuplicateKeyError(exception)) {
@@ -54,6 +68,15 @@ public class FacilityService {
             return;
         }
         facilityRepository.updateHourlyRentalCost(id, hourlyRentalCost);
+    }
+
+    public void deleteFacility(Long id) {
+        if (facilityRepository.findById(id).isEmpty()) {
+            System.out.println("Помещение с id=" + id + " не найдено, удаление пропущено");
+            return;
+        }
+        facilityRepository.deleteById(id);
+        System.out.println("Помещение с id=" + id + " удалено (вместе с записями)");
     }
 
     public List<FacilityDto> getAllFacilities() {
@@ -93,12 +116,17 @@ public class FacilityService {
     }
 
     private FacilityDto toDto(Facility facility) {
+        String serviceName = null;
+        if (facility.getProvidedService() != null) {
+            serviceName = facility.getProvidedService().getServiceName();
+        }
         return new FacilityDto(
                 facility.getFacilityName(),
                 facility.getIdentificationNumber(),
                 facility.getMaxCapacity(),
                 facility.getStatus(),
-                facility.getHourlyRentalCost()
+                facility.getHourlyRentalCost(),
+                serviceName
         );
     }
 }

@@ -11,17 +11,19 @@ public class FacilityDto {
     private int maxCapacity;
     private FacilityStatus status;
     private BigDecimal hourlyRentalCost;
+    private String serviceName;
 
     public FacilityDto() {
     }
 
     public FacilityDto(String facilityName, String identificationNumber, int maxCapacity,
-                       FacilityStatus status, BigDecimal hourlyRentalCost) {
+                       FacilityStatus status, BigDecimal hourlyRentalCost, String serviceName) {
         this.facilityName = facilityName;
         this.identificationNumber = identificationNumber;
         this.maxCapacity = maxCapacity;
         this.status = status;
         this.hourlyRentalCost = hourlyRentalCost;
+        this.serviceName = serviceName;
     }
 
     public String getFacilityName() {
@@ -64,6 +66,14 @@ public class FacilityDto {
         this.hourlyRentalCost = hourlyRentalCost;
     }
 
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
+    }
+
     @Override
     public String toString() {
         return "FacilityDto{" +
@@ -72,6 +82,7 @@ public class FacilityDto {
                 ", maxCapacity=" + maxCapacity +
                 ", status=" + status +
                 ", hourlyRentalCost=" + hourlyRentalCost +
+                ", serviceName='" + serviceName + '\'' +
                 '}';
     }
 }

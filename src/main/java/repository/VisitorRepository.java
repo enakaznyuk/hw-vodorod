@@ -63,6 +63,22 @@ public class VisitorRepository {
         }
     }
 
+    public Optional<Visitor> findByFullNameAndBirthYear(String firstName, String lastName, int birthYear) {
+        Session session = HibernateUtil.openSession();
+        try {
+            return session.createQuery(
+                            "FROM Visitor v WHERE v.firstName = :firstName " +
+                                    "AND v.lastName = :lastName AND v.birthYear = :birthYear",
+                            Visitor.class)
+                    .setParameter("firstName", firstName)
+                    .setParameter("lastName", lastName)
+                    .setParameter("birthYear", birthYear)
+                    .uniqueResultOptional();
+        } finally {
+            session.close();
+        }
+    }
+
     public void deleteById(Long id) {
         Session session = HibernateUtil.openSession();
         Transaction transaction = session.beginTransaction();

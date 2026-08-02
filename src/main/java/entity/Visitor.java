@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "visitors")
@@ -23,6 +25,9 @@ public class Visitor extends User {
 
     @Column(name = "first_visit_date", nullable = false)
     private LocalDate firstVisitDate;
+
+    @OneToMany(mappedBy = "visitor", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Visit> visits = new ArrayList<>();
 
     public Visitor() {
     }
@@ -67,6 +72,14 @@ public class Visitor extends User {
 
     public void setFirstVisitDate(LocalDate firstVisitDate) {
         this.firstVisitDate = firstVisitDate;
+    }
+
+    public List<Visit> getVisits() {
+        return visits;
+    }
+
+    public void setVisits(List<Visit> visits) {
+        this.visits = visits;
     }
 
     @Override

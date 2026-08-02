@@ -3,6 +3,8 @@ package entity;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "facilities")
@@ -28,16 +30,24 @@ public class Facility {
     @Column(name = "hourly_rental_cost", nullable = false)
     private BigDecimal hourlyRentalCost;
 
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "service_id", nullable = false)
+    private ProvidedService providedService;
+
+    @OneToMany(mappedBy = "facility", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Appointment> appointments = new ArrayList<>();
+
     public Facility() {
     }
 
     public Facility(String facilityName, String identificationNumber, int maxCapacity,
-                    FacilityStatus status, BigDecimal hourlyRentalCost) {
+                    FacilityStatus status, BigDecimal hourlyRentalCost, ProvidedService providedService) {
         this.facilityName = facilityName;
         this.identificationNumber = identificationNumber;
         this.maxCapacity = maxCapacity;
         this.status = status;
         this.hourlyRentalCost = hourlyRentalCost;
+        this.providedService = providedService;
     }
 
     public Long getId() {
@@ -88,6 +98,22 @@ public class Facility {
         this.hourlyRentalCost = hourlyRentalCost;
     }
 
+    public ProvidedService getProvidedService() {
+        return providedService;
+    }
+
+    public void setProvidedService(ProvidedService providedService) {
+        this.providedService = providedService;
+    }
+
+    public List<Appointment> getAppointments() {
+        return appointments;
+    }
+
+    public void setAppointments(List<Appointment> appointments) {
+        this.appointments = appointments;
+    }
+
     @Override
     public String toString() {
         return "Facility{" +
@@ -97,6 +123,7 @@ public class Facility {
                 ", maxCapacity=" + maxCapacity +
                 ", status=" + status +
                 ", hourlyRentalCost=" + hourlyRentalCost +
+                ", serviceId=" + (providedService != null ? providedService.getId() : null) +
                 '}';
     }
 }

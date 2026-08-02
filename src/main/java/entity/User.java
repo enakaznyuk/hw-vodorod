@@ -2,6 +2,9 @@ package entity;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "users")
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -22,6 +25,9 @@ public abstract class User {
 
     @Embedded
     private Address address;
+
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Appointment> appointments = new ArrayList<>();
 
     public User() {
     }
@@ -71,6 +77,14 @@ public abstract class User {
 
     public void setAddress(Address address) {
         this.address = address;
+    }
+
+    public List<Appointment> getAppointments() {
+        return appointments;
+    }
+
+    public void setAppointments(List<Appointment> appointments) {
+        this.appointments = appointments;
     }
 
     @Override

@@ -6,6 +6,7 @@ import org.hibernate.Transaction;
 import util.HibernateUtil;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,7 +31,11 @@ public class FacilityRepository {
     public Optional<Facility> findById(Long id) {
         Session session = HibernateUtil.openSession();
         try {
-            return Optional.ofNullable(session.get(Facility.class, id));
+            return session.createQuery(
+                            "SELECT f FROM Facility f LEFT JOIN FETCH f.providedService WHERE f.id = :id",
+                            Facility.class)
+                    .setParameter("id", id)
+                    .uniqueResultOptional();
         } finally {
             session.close();
         }
@@ -40,7 +45,9 @@ public class FacilityRepository {
         Session session = HibernateUtil.openSession();
         try {
             return session.createQuery(
-                            "FROM Facility f WHERE f.identificationNumber = :identificationNumber", Facility.class)
+                            "SELECT f FROM Facility f LEFT JOIN FETCH f.providedService " +
+                                    "WHERE f.identificationNumber = :identificationNumber",
+                            Facility.class)
                     .setParameter("identificationNumber", identificationNumber)
                     .uniqueResultOptional();
         } finally {
@@ -51,8 +58,12 @@ public class FacilityRepository {
     public List<Facility> findAll() {
         Session session = HibernateUtil.openSession();
         try {
-            return session.createQuery("FROM Facility f ORDER BY f.id", Facility.class)
+            List<Facility> facilities = session.createQuery(
+                            "SELECT DISTINCT f FROM Facility f LEFT JOIN FETCH f.providedService",
+                            Facility.class)
                     .getResultList();
+            facilities.sort((left, right) -> Long.compare(left.getId(), right.getId()));
+            return facilities;
         } finally {
             session.close();
         }
@@ -68,9 +79,14 @@ public class FacilityRepository {
                 return null;
             }
 
+            if (template.getProvidedService() != null) {
+                template.getProvidedService().getServiceName();
+            }
+
             session.detach(template);
             template.setId(null);
             template.setIdentificationNumber(newIdentificationNumber);
+            template.setAppointments(new ArrayList<>());
 
             session.persist(template);
             transaction.commit();
@@ -92,6 +108,25 @@ public class FacilityRepository {
             Facility facility = session.get(Facility.class, id);
             if (facility != null) {
                 facility.setHourlyRentalCost(hourlyRentalCost);
+            }
+            transaction.commit();
+        } catch (Exception exception) {
+            if (transaction.isActive()) {
+                transaction.rollback();
+            }
+            throw exception;
+        } finally {
+            session.close();
+        }
+    }
+
+    public void deleteById(Long id) {
+        Session session = HibernateUtil.openSession();
+        Transaction transaction = session.beginTransaction();
+        try {
+            Facility facility = session.get(Facility.class, id);
+            if (facility != null) {
+                session.remove(facility);
             }
             transaction.commit();
         } catch (Exception exception) {

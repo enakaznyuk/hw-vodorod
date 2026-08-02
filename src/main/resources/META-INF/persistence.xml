@@ -11,6 +11,8 @@
         <class>entity.Employee</class>
         <class>entity.ProvidedService</class>
         <class>entity.Facility</class>
+        <class>entity.Visit</class>
+        <class>entity.Appointment</class>
         <class>entity.SmallCapacityFacility</class>
         <class>entity.PremiumClient</class>
 
