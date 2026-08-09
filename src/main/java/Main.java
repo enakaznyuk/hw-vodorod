@@ -2,6 +2,7 @@ import dto.AddressDto;
 import dto.AppointmentDto;
 import dto.EmployeeDto;
 import dto.FacilityDto;
+import dto.GymHourlyCostDto;
 import dto.ProvidedServiceDto;
 import dto.VisitDto;
 import dto.VisitorDto;
@@ -140,6 +141,45 @@ public class Main {
         } else {
             for (PremiumClient client : premiumClients) {
                 System.out.println(client);
+            }
+        }
+
+        System.out.println("\n=== Поиск клиента по имени ===");
+        List<VisitorDto> foundByName = visitorService.findVisitorsByName("Анна");
+        if (foundByName.isEmpty()) {
+            System.out.println("Клиенты с именем Анна не найдены");
+        } else {
+            printVisitors(foundByName);
+        }
+
+        System.out.println("\n=== Самый высокооплачиваемый сотрудник ===");
+        employeeService.findHighestPaidEmployee()
+                .ifPresentOrElse(
+                        employee -> System.out.println(employee),
+                        () -> System.out.println("Сотрудники не найдены")
+                );
+
+        System.out.println("\n=== Сотрудник с самой низкой зарплатой ===");
+        employeeService.findLowestPaidEmployee()
+                .ifPresentOrElse(
+                        employee -> System.out.println(employee),
+                        () -> System.out.println("Сотрудники не найдены")
+                );
+
+        System.out.println("\n=== Расходы на персонал за период ===");
+        LocalDate periodStart = LocalDate.of(2025, 1, 1);
+        LocalDate periodEnd = LocalDate.of(2025, 12, 31);
+        BigDecimal staffExpenses = employeeService.calculateStaffExpenses(periodStart, periodEnd);
+        System.out.println("Период: " + periodStart + " — " + periodEnd);
+        System.out.println("Расходы на персонал: " + staffExpenses);
+
+        System.out.println("\n=== Стоимость часа на 1 человека в тренажёрных залах ===");
+        List<GymHourlyCostDto> gymCosts = facilityService.getGymHourlyCostPerPerson();
+        if (gymCosts.isEmpty()) {
+            System.out.println("Тренажёрные залы не найдены");
+        } else {
+            for (GymHourlyCostDto gymCost : gymCosts) {
+                System.out.println(gymCost);
             }
         }
 

@@ -5,6 +5,7 @@ import org.hibernate.Session;
 import org.hibernate.Transaction;
 import util.HibernateUtil;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -57,6 +58,48 @@ public class EmployeeRepository {
         Session session = HibernateUtil.openSession();
         try {
             return Optional.ofNullable(session.get(Employee.class, id));
+        } finally {
+            session.close();
+        }
+    }
+
+    public Optional<Employee> findHighestPaid() {
+        Session session = HibernateUtil.openSession();
+        try {
+            return session.createQuery(
+                            "FROM Employee e ORDER BY e.monthlySalary DESC, e.id ASC",
+                            Employee.class)
+                    .setMaxResults(1)
+                    .uniqueResultOptional();
+        } finally {
+            session.close();
+        }
+    }
+
+    public Optional<Employee> findLowestPaid() {
+        Session session = HibernateUtil.openSession();
+        try {
+            return session.createQuery(
+                            "FROM Employee e ORDER BY e.monthlySalary ASC, e.id ASC",
+                            Employee.class)
+                    .setMaxResults(1)
+                    .uniqueResultOptional();
+        } finally {
+            session.close();
+        }
+    }
+
+    public List<Employee> findActiveInPeriod(LocalDate periodStart, LocalDate periodEnd) {
+        Session session = HibernateUtil.openSession();
+        try {
+            return session.createQuery(
+                            "FROM Employee e WHERE e.hireDate <= :periodEnd " +
+                                    "AND (e.fireDate IS NULL OR e.fireDate >= :periodStart) " +
+                                    "ORDER BY e.id",
+                            Employee.class)
+                    .setParameter("periodStart", periodStart)
+                    .setParameter("periodEnd", periodEnd)
+                    .getResultList();
         } finally {
             session.close();
         }

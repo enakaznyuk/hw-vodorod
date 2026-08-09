@@ -50,6 +50,12 @@ public class VisitorService {
         return visitorRepository.findById(id).map(this::toDto);
     }
 
+    public List<VisitorDto> findVisitorsByName(String firstName) {
+        return visitorRepository.findByFirstName(firstName).stream()
+                .map(this::toDto)
+                .toList();
+    }
+
     public void deleteVisitor(Long id) {
         if (visitorRepository.findById(id).isEmpty()) {
             System.out.println("Посетитель с id=" + id + " не найден, удаление пропущено");

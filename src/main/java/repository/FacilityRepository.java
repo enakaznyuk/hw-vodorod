@@ -69,6 +69,24 @@ public class FacilityRepository {
         }
     }
 
+    public List<Facility> findGyms() {
+        Session session = HibernateUtil.openSession();
+        try {
+            List<Facility> gyms = session.createQuery(
+                            "SELECT DISTINCT f FROM Facility f LEFT JOIN FETCH f.providedService " +
+                                    "WHERE lower(f.facilityName) LIKE lower(:gymName) " +
+                                    "OR lower(f.identificationNumber) LIKE lower(:gymCode)",
+                            Facility.class)
+                    .setParameter("gymName", "%Тренажёрный зал%")
+                    .setParameter("gymCode", "GYM-%")
+                    .getResultList();
+            gyms.sort((left, right) -> Long.compare(left.getId(), right.getId()));
+            return gyms;
+        } finally {
+            session.close();
+        }
+    }
+
     public Facility addFacilityByDetach(Long templateId, String newIdentificationNumber) {
         Session session = HibernateUtil.openSession();
         Transaction transaction = session.beginTransaction();

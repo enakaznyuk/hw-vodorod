@@ -79,6 +79,19 @@ public class VisitorRepository {
         }
     }
 
+    public List<Visitor> findByFirstName(String firstName) {
+        Session session = HibernateUtil.openSession();
+        try {
+            return session.createQuery(
+                            "FROM Visitor v WHERE lower(v.firstName) = lower(:firstName) ORDER BY v.id",
+                            Visitor.class)
+                    .setParameter("firstName", firstName)
+                    .getResultList();
+        } finally {
+            session.close();
+        }
+    }
+
     public void deleteById(Long id) {
         Session session = HibernateUtil.openSession();
         Transaction transaction = session.beginTransaction();

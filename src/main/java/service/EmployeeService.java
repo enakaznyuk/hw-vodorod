@@ -7,6 +7,9 @@ import entity.Employee;
 import org.hibernate.exception.ConstraintViolationException;
 import repository.EmployeeRepository;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,6 +50,45 @@ public class EmployeeService {
 
     public Optional<EmployeeDto> findEmployeeById(Long id) {
         return employeeRepository.findById(id).map(this::toDto);
+    }
+
+    public Optional<EmployeeDto> findHighestPaidEmployee() {
+        return employeeRepository.findHighestPaid().map(this::toDto);
+    }
+
+    public Optional<EmployeeDto> findLowestPaidEmployee() {
+        return employeeRepository.findLowestPaid().map(this::toDto);
+    }
+
+    public BigDecimal calculateStaffExpenses(LocalDate periodStart, LocalDate periodEnd) {
+        if (periodStart == null || periodEnd == null || periodStart.isAfter(periodEnd)) {
+            throw new IllegalArgumentException("Некорректный период: дата начала должна быть не позже даты окончания");
+        }
+
+        BigDecimal total = BigDecimal.ZERO;
+        List<Employee> employees = employeeRepository.findActiveInPeriod(periodStart, periodEnd);
+
+        for (Employee employee : employees) {
+            LocalDate workStart = employee.getHireDate().isAfter(periodStart)
+                    ? employee.getHireDate()
+                    : periodStart;
+            LocalDate workEnd = employee.getFireDate() == null || employee.getFireDate().isAfter(periodEnd)
+                    ? periodEnd
+                    : employee.getFireDate();
+
+            if (workStart.isAfter(workEnd)) {
+                continue;
+            }
+
+            long months = ChronoUnit.MONTHS.between(
+                    workStart.withDayOfMonth(1),
+                    workEnd.withDayOfMonth(1)
+            ) + 1;
+
+            total = total.add(employee.getMonthlySalary().multiply(BigDecimal.valueOf(months)));
+        }
+
+        return total;
     }
 
     private boolean isDuplicateKeyError(Throwable exception) {

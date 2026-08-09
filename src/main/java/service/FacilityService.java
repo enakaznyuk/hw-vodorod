@@ -1,6 +1,7 @@
 package service;
 
 import dto.FacilityDto;
+import dto.GymHourlyCostDto;
 import entity.Facility;
 import entity.ProvidedService;
 import org.hibernate.exception.ConstraintViolationException;
@@ -8,6 +9,8 @@ import repository.FacilityRepository;
 import repository.ProvidedServiceRepository;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -91,6 +94,25 @@ public class FacilityService {
 
     public Optional<Long> findIdByIdentificationNumber(String identificationNumber) {
         return facilityRepository.findByIdentificationNumber(identificationNumber).map(Facility::getId);
+    }
+
+    public List<GymHourlyCostDto> getGymHourlyCostPerPerson() {
+        List<GymHourlyCostDto> result = new ArrayList<>();
+        for (Facility gym : facilityRepository.findGyms()) {
+            BigDecimal costPerPerson = BigDecimal.ZERO;
+            if (gym.getMaxCapacity() > 0) {
+                costPerPerson = gym.getHourlyRentalCost()
+                        .divide(BigDecimal.valueOf(gym.getMaxCapacity()), 2, RoundingMode.HALF_UP);
+            }
+            result.add(new GymHourlyCostDto(
+                    gym.getFacilityName(),
+                    gym.getIdentificationNumber(),
+                    gym.getMaxCapacity(),
+                    gym.getHourlyRentalCost(),
+                    costPerPerson
+            ));
+        }
+        return result;
     }
 
     private boolean isDuplicateKeyError(Throwable exception) {
