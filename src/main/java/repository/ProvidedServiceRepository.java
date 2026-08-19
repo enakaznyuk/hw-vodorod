@@ -1,6 +1,9 @@
 package repository;
 
 import entity.ProvidedService;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import util.HibernateUtil;
@@ -42,6 +45,27 @@ public class ProvidedServiceRepository {
             return session.createQuery(
                             "FROM ProvidedService ps WHERE ps.serviceName = :serviceName", ProvidedService.class)
                     .setParameter("serviceName", serviceName)
+                    .uniqueResultOptional();
+        } finally {
+            session.close();
+        }
+    }
+
+    public Optional<ProvidedService> findWithLowestPriceByCriteria() {
+        Session session = HibernateUtil.openSession();
+        try {
+            CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+            CriteriaQuery<ProvidedService> criteriaQuery = criteriaBuilder.createQuery(ProvidedService.class);
+            Root<ProvidedService> root = criteriaQuery.from(ProvidedService.class);
+
+            criteriaQuery.select(root)
+                    .orderBy(
+                            criteriaBuilder.asc(root.get("price")),
+                            criteriaBuilder.asc(root.get("id"))
+                    );
+
+            return session.createQuery(criteriaQuery)
+                    .setMaxResults(1)
                     .uniqueResultOptional();
         } finally {
             session.close();

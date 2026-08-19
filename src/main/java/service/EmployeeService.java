@@ -43,9 +43,13 @@ public class EmployeeService {
     }
 
     public List<EmployeeDto> getAllEmployees() {
-        return employeeRepository.findAll().stream()
+        return employeeRepository.findAllByCriteria().stream()
                 .map(this::toDto)
                 .toList();
+    }
+
+    public List<EmployeeDto> getAllEmployeesByCriteria() {
+        return getAllEmployees();
     }
 
     public Optional<EmployeeDto> findEmployeeById(Long id) {

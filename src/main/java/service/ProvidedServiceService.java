@@ -6,6 +6,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import repository.ProvidedServiceRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public class ProvidedServiceService {
 
@@ -32,6 +33,10 @@ public class ProvidedServiceService {
         return providedServiceRepository.findAll().stream()
                 .map(this::toDto)
                 .toList();
+    }
+
+    public Optional<ProvidedServiceDto> findCheapestServiceByCriteria() {
+        return providedServiceRepository.findWithLowestPriceByCriteria().map(this::toDto);
     }
 
     private boolean isDuplicateKeyError(Throwable exception) {

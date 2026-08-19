@@ -4,6 +4,7 @@ import dto.EmployeeDto;
 import dto.FacilityDto;
 import dto.GymHourlyCostDto;
 import dto.ProvidedServiceDto;
+import dto.UserDto;
 import dto.VisitDto;
 import dto.VisitorDto;
 import entity.Appointment;
@@ -18,12 +19,14 @@ import repository.FacilityRepository;
 import repository.PremiumClientRepository;
 import repository.ProvidedServiceRepository;
 import repository.SmallCapacityFacilityRepository;
+import repository.UserRepository;
 import repository.VisitRepository;
 import repository.VisitorRepository;
 import service.AppointmentService;
 import service.EmployeeService;
 import service.FacilityService;
 import service.ProvidedServiceService;
+import service.UserService;
 import service.VisitService;
 import service.VisitorService;
 import util.HibernateUtil;
@@ -42,6 +45,9 @@ public class Main {
 
         EmployeeRepository employeeRepository = new EmployeeRepository();
         EmployeeService employeeService = new EmployeeService(employeeRepository);
+
+        UserRepository userRepository = new UserRepository();
+        UserService userService = new UserService(userRepository);
 
         ProvidedServiceRepository providedServiceRepository = new ProvidedServiceRepository();
         ProvidedServiceService providedServiceService = new ProvidedServiceService(providedServiceRepository);
@@ -183,6 +189,39 @@ public class Main {
             }
         }
 
+        System.out.println("\n=== Criteria: все сотрудники ===");
+        printEmployees(employeeService.getAllEmployeesByCriteria());
+
+        System.out.println("\n=== Criteria: активность с минимальной стоимостью ===");
+        providedServiceService.findCheapestServiceByCriteria()
+                .ifPresentOrElse(
+                        service -> System.out.println(service),
+                        () -> System.out.println("Услуги не найдены")
+                );
+
+        System.out.println("\n=== Criteria: сумма вместимости всех помещений ===");
+        System.out.println("Общее количество человек одновременно: "
+                + facilityService.getTotalSimultaneousCapacityByCriteria());
+
+        System.out.println("\n=== Criteria: пользователи по диапазону возраста 25-40 ===");
+        List<UserDto> usersByAge = userService.findUsersByAgeRange(25, 40);
+        if (usersByAge.isEmpty()) {
+            System.out.println("Пользователи в диапазоне возраста не найдены");
+        } else {
+            for (UserDto user : usersByAge) {
+                System.out.println(user);
+            }
+        }
+
+        System.out.println("\n=== Criteria: помещения, которые посещали гости старше 50 лет ===");
+        List<FacilityDto> facilitiesForSeniors =
+                facilityService.findFacilitiesVisitedByGuestsOlderThanByCriteria(50);
+        if (facilitiesForSeniors.isEmpty()) {
+            System.out.println("Таких помещений нет");
+        } else {
+            printFacilities(facilitiesForSeniors);
+        }
+
         HibernateUtil.shutdown();
     }
 
@@ -229,6 +268,17 @@ public class Main {
                 LocalDateTime.of(2026, 3, 2, 16, 15),
                 new BigDecimal("3200.75"),
                 LocalDate.of(2024, 11, 3)
+        ))) {
+            added++;
+        }
+
+        if (visitorService.addVisitor(new VisitorDto(
+                "Николай", "Орлов", 1960,
+                new AddressDto("Тула", "Советская", "8", "300041"),
+                ClientStatus.ACTIVE,
+                LocalDateTime.of(2026, 7, 5, 11, 0),
+                new BigDecimal("9800.00"),
+                LocalDate.of(2022, 4, 12)
         ))) {
             added++;
         }
@@ -375,10 +425,14 @@ public class Main {
         Long dmitryId = visitorRepository.findByFullNameAndBirthYear("Дмитрий", "Козлов", 1991)
                 .map(visitor -> visitor.getId())
                 .orElse(null);
+        Long nikolayId = visitorRepository.findByFullNameAndBirthYear("Николай", "Орлов", 1960)
+                .map(visitor -> visitor.getId())
+                .orElse(null);
 
         Long gymId = facilityService.findIdByIdentificationNumber("GYM-001").orElse(null);
         Long yogaId = facilityService.findIdByIdentificationNumber("YOGA-001").orElse(null);
         Long massageId = facilityService.findIdByIdentificationNumber("MASSAGE-001").orElse(null);
+        Long pilatesId = facilityService.findIdByIdentificationNumber("PILATES-001").orElse(null);
 
         if (ivanId != null && gymId != null) {
             appointmentService.addAppointment(ivanId, gymId,
@@ -397,6 +451,14 @@ public class Main {
         if (ivanId != null && yogaId != null) {
             appointmentService.addAppointment(ivanId, yogaId,
                     new AppointmentDto(LocalDate.of(2026, 7, 16), LocalTime.of(9, 0)));
+        }
+        if (nikolayId != null && gymId != null) {
+            appointmentService.addAppointment(nikolayId, gymId,
+                    new AppointmentDto(LocalDate.of(2026, 7, 20), LocalTime.of(8, 30)));
+        }
+        if (nikolayId != null && pilatesId != null) {
+            appointmentService.addAppointment(nikolayId, pilatesId,
+                    new AppointmentDto(LocalDate.of(2026, 7, 21), LocalTime.of(17, 0)));
         }
 
         return yogaId;

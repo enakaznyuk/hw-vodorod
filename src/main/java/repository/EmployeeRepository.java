@@ -1,6 +1,9 @@
 package repository;
 
 import entity.Employee;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import util.HibernateUtil;
@@ -45,10 +48,19 @@ public class EmployeeRepository {
     }
 
     public List<Employee> findAll() {
+        return findAllByCriteria();
+    }
+
+    public List<Employee> findAllByCriteria() {
         Session session = HibernateUtil.openSession();
         try {
-            return session.createQuery("FROM Employee e ORDER BY e.id", Employee.class)
-                    .getResultList();
+            CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+            CriteriaQuery<Employee> criteriaQuery = criteriaBuilder.createQuery(Employee.class);
+            Root<Employee> root = criteriaQuery.from(Employee.class);
+
+            criteriaQuery.select(root).orderBy(criteriaBuilder.asc(root.get("id")));
+
+            return session.createQuery(criteriaQuery).getResultList();
         } finally {
             session.close();
         }

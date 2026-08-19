@@ -115,6 +115,16 @@ public class FacilityService {
         return result;
     }
 
+    public long getTotalSimultaneousCapacityByCriteria() {
+        return facilityRepository.sumMaxCapacityByCriteria();
+    }
+
+    public List<FacilityDto> findFacilitiesVisitedByGuestsOlderThanByCriteria(int age) {
+        return facilityRepository.findVisitedByGuestsOlderThanByCriteria(age).stream()
+                .map(this::toDto)
+                .toList();
+    }
+
     private boolean isDuplicateKeyError(Throwable exception) {
         Throwable current = exception;
         while (current != null) {
